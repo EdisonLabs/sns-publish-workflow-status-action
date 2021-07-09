@@ -1,0 +1,36 @@
+name: 'SNS Publish Workflow Status'
+description: 'Publish Workflow run conclusion to SNS'
+inputs:
+  GITHUB_TOKEN:
+    description: 'Secret GitHub API token to use for making API requests.'
+    default: ${{ github.token }}
+    required: true
+  RUN_ID:
+    description: 'Run ID for the workflow.'
+    default: ${{ github.run_id }}
+    required: true
+  INITIAL_JOB:
+    description: 'Used to send a "started" status as initial notification.'
+    default: false
+  GITHUB_CONTEXT:
+    description: 'GitHub context object.'
+    default: ${{ toJson(github) }}
+    required: true
+  TOPIC_ARN:
+    description: 'ARN for the SNS topic.'
+    required: true
+  AWS_REGION:
+    description: 'AWS SNS region. Can be stored in environment.'
+    required: true
+  AWS_ACCESS_KEY_ID:
+    description: 'AWS access key ID. Can be stored in environment.'
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: 'AWS secret access key. Can be stored in environment.'
+    required: true
+outputs:
+  MESSAGE_ID:
+    description: 'ID of the SNS message sent.'
+runs:
+  using: 'node12'
+  main: 'src/index.js'

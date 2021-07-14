@@ -1,14 +1,6 @@
 name: 'SNS Publish Workflow Status'
 description: 'Publish Workflow run conclusion to SNS'
 inputs:
-  GITHUB_TOKEN:
-    description: 'Secret GitHub API token to use for making API requests.'
-    default: ${{ github.token }}
-    required: true
-  RUN_ID:
-    description: 'Run ID for the workflow.'
-    default: ${{ github.run_id }}
-    required: true
   INITIAL_JOB:
     description: 'Used to send a "started" status as initial notification.'
     default: false

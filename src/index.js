@@ -95,7 +95,6 @@ async function main() {
 		const snsResult = await sendNotification(message);
 
 		if (snsResult.err) {
-			console.log(err);
 			core.error(err.Message);
 			core.setFailed(err.Message);
 		} else {

@@ -13,13 +13,11 @@ const CONCLUSIONS = [
 ];
 
 // Fetch all the workflow run jobs
-const getJobs = async context => {
-	const RUN_ID = core.getInput('RUN_ID');
-	const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-	const octokit = github.getOctokit(GITHUB_TOKEN);
+const getJobs = async (context, runId, token) => {
+	const octokit = github.getOctokit(token);
 	const jobs = await octokit.paginate(octokit.rest.actions.listJobsForWorkflowRun, {
 		...context.repo,
-		run_id: RUN_ID,
+		run_id: runId,
 	});
 
 	return jobs;
@@ -32,12 +30,12 @@ const getConclusions = jobs => Object.values(jobs
 	.reduce((acc, job) => ({...acc, [job.name]: job.conclusion}), {}));
 
 // Match the correct conclusion for the run
-const getConclusion = async context => {
+const getConclusion = async (context, runId, token) => {
 	const IS_INITIAL = core.getBooleanInput('INITIAL_JOB');
 
 	if (IS_INITIAL) return "started";
 
-	const jobs = await getJobs(context);
+	const jobs = await getJobs(context, runId, token);
 
 	core.startGroup("Jobs information:");
 	core.info(JSON.stringify(jobs, null, 2));
@@ -52,9 +50,7 @@ const getConclusion = async context => {
 
 
 // Send notification to SNS
-const sendNotification = message => {
-	core.info("Notification payload: " + JSON.stringify(message, null, 2));
-
+const sendNotification = async message => {
 	const AWS_REGION = core.getInput("AWS_REGION") || process.env.AWS_REGION;
 	const AWS_ACCESS_KEY_ID = core.getInput("AWS_ACCESS_KEY_ID") || process.env.AWS_ACCESS_KEY_ID;
 	const AWS_SECRET_ACCESS_KEY = core.getInput("AWS_SECRET_ACCESS_KEY") || process.env.AWS_SECRET_ACCESS_KEY;
@@ -69,22 +65,20 @@ const sendNotification = message => {
 
 	const awsSnsPromise = new AWS.SNS({ apiVersion: "2010-03-31" }).publish(params).promise();
 
-	awsSnsPromise.then(function(data) {
-		core.info("Message published!");
-		return data.MessageId;
-	}).catch(function(err) {
-		core.error(err);
-		core.setFailed(err.Message);
-	});
+	core.info(`Message ${params.Message} sent to the topic ${params.TopicArn}`);
+
+	return awsSnsPromise;
 }
 
 async function main() {
 	try {
 		const ghContext = core.getInput('GITHUB_CONTEXT');
 		const ghObject = JSON.parse(ghContext);
+		const token = ghObject.token;
+		const runId = ghObject.run_id;
 		delete ghObject.token;
 		const context = github.context;
-		const conclusion = await getConclusion(context);
+		const conclusion = await getConclusion(context, runId, token);
 
 		core.startGroup("Conclusion information:");
 		core.info("CONCLUSION: " +  conclusion);
@@ -98,9 +92,17 @@ async function main() {
 			}
 		};
 
-		const messageId = sendNotification(message);
-		core.setOutput('MESSAGE_ID', messageId);
-		core.info("Message ID: " + messageId);
+		const snsResult = await sendNotification(message);
+
+		if (snsResult.err) {
+			console.log(err);
+			core.error(err.Message);
+			core.setFailed(err.Message);
+		} else {
+			core.info("Message published!");
+			core.info("Message ID: " + snsResult.MessageId);
+			core.setOutput('MESSAGE_ID', snsResult.MessageId);
+		}
 		core.endGroup();
 	} catch (error) {
 		core.error(error.message);

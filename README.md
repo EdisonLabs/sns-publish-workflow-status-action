@@ -26,10 +26,7 @@ This repository contains an action that resolves the current Workflow Run conclu
 #### Example usage
 
 ```yaml
-on:
-  push:
-    branches:
-      - '*'
+on: push
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -40,16 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     name: Send initial notification
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Send initial notification
-        uses: ./
-        id: sns_workflow_status
+        uses: EdisonLabs/sns-publish-workflow-status-action@1.0.0
         with:
           TOPIC_ARN: ${{ secrets.TOPIC_ARN }}
           INITIAL_JOB: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   failed-run:
     runs-on: ubuntu-latest
     name: Failed test run
@@ -63,13 +55,8 @@ jobs:
     if: always()
     needs: [failed-run]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
       - name: Determine status and send notification
-        uses: ./
-        id: sns_workflow_status
+        uses: EdisonLabs/sns-publish-workflow-status-action@1.0.0
         with:
           TOPIC_ARN: ${{ secrets.TOPIC_ARN }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```

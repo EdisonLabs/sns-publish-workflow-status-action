@@ -1,10 +1,8 @@
-# SNS Publich Workflow Status Action
+# AWS SNS Publish Workflow Status Action
 
-This repository contains an action that resolves the current Workflow Run conclusion and sends a SNS message to the topic provided.
+This repository contains an action that resolves the current Workflow Run conclusion and sends a SNS (Amazon Simple Notification Service) message to the topic provided.
 
-## Actions
-
-#### Inputs
+## Inputs
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -12,18 +10,18 @@ This repository contains an action that resolves the current Workflow Run conclu
 | `RUN_ID` | string | Run ID for the workflow. Default: `github.run_id` |
 | `INITIAL_JOB` | boolean | Used to send a "started" status as initial notification. Default: `false` |
 | `GITHUB_CONTEXT` | string | GitHub context object. Automatically assigned to be included in the notification. |
-| `TOPIC_ARN` | string | ARN for the SNS topic. |
+| `TOPIC_ARN` | string | AWS ARN for the SNS topic. |
 | `AWS_REGION` | string | AWS SNS region. Can be stored in environment. |
 | `AWS_ACCESS_KEY_ID` | string | AWS access key ID. Can be stored in environment. |
 | `AWS_SECRET_ACCESS_KEY` | string | AWS secret access key. Can be stored in environment. |
 
-#### Outputs
+## Outputs
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
 | `MESSAGE_ID` | string | ID of the SNS message sent. |
 
-#### Example usage
+## Example usage
 
 ```yaml
 on: push
@@ -60,3 +58,18 @@ jobs:
         with:
           TOPIC_ARN: ${{ secrets.TOPIC_ARN }}
 ```
+
+## Message format
+This action publishes the following message format to SNS. 
+
+```
+{
+  "github": <context object>,
+  "workflow": {
+    "status": "<workflow status>"
+  }
+}
+```
+
+* `<context object>`: [GitHub context object](https://docs.github.com/en/actions/reference/context-and-expression-syntax-for-github-actions#contexts) containing  information about workflow runs, runner environments, jobs, and steps.
+* `<workflow status>`: The workflow conclusion status, such as: `started`, `neutral`, `skipped`, `success`, `cancelled`, `timed_out`, `action_required` and `failure`. 

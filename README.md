@@ -36,7 +36,7 @@ jobs:
     name: Send initial notification
     steps:
       - name: Send initial notification
-        uses: EdisonLabs/sns-publish-workflow-status-action@1.0.0
+        uses: EdisonLabs/sns-publish-workflow-status-action@v1
         with:
           TOPIC_ARN: ${{ secrets.TOPIC_ARN }}
           INITIAL_JOB: true
@@ -54,7 +54,7 @@ jobs:
     needs: [failed-run]
     steps:
       - name: Determine status and send notification
-        uses: EdisonLabs/sns-publish-workflow-status-action@1.0.0
+        uses: EdisonLabs/sns-publish-workflow-status-action@v1
         with:
           TOPIC_ARN: ${{ secrets.TOPIC_ARN }}
 ```
